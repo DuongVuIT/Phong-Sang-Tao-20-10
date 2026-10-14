@@ -1,0 +1,41 @@
+{
+  "name": "chi-em-20-10",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Web chúc mừng 20/10 cho chị em phòng Sáng Tạo – đăng nhập Telegram, lì xì 3D, lời chúc Remotion",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "blender": "python blender/build_scene.py",
+    "studio": "remotion studio src/remotion/index.ts",
+    "typecheck": "tsc --noEmit",
+    "seal": "node scripts/seal.mjs",
+    "send-links": "node scripts/send-links.mjs"
+  },
+  "dependencies": {
+    "@fontsource/be-vietnam-pro": "^5.3.0",
+    "@fontsource/dancing-script": "^5.3.0",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.1",
+    "@remotion/player": "4.0.535",
+    "@remotion/three": "4.0.535",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "4.0.535",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "4.0.535",
+    "@remotion/cli": "4.0.535",
+    "@remotion/renderer": "4.0.535",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "5.9",
+    "vite": "^7.3.7"
+  }
+}

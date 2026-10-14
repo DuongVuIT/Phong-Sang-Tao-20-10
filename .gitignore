@@ -1,0 +1,11 @@
+node_modules
+dist
+out
+.env
+.env.local
+*.blend1
+__pycache__
+public/videos/*.mp4
+
+# dữ liệu thật + khoá – KHÔNG commit
+private/

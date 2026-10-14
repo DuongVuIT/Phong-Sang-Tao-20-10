@@ -1,0 +1,75 @@
+name: 🌹 Build & Deploy 20/10
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # đẩy bản build lên nhánh gh-pages
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  blender:
+    name: 🧊 Blender – dựng mô hình 3D
+    runs-on: ubuntu-latest
+    continue-on-error: true # lỗi thì dùng bản .glb đã commit sẵn
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: blender/requirements.txt
+      - name: Cài thư viện hệ thống cho bpy
+        run: sudo apt-get update -q && sudo apt-get install -y -q libxrender1 libxxf86vm1 libxfixes3 libxi6 libxkbcommon0 libsm6 libgl1 libegl1
+      - run: pip install -r blender/requirements.txt
+      - name: Dựng bao lì xì + hoa hồng, render ảnh preview (Cycles)
+        run: python blender/build_scene.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blender-assets
+          path: |
+            public/models/*.glb
+            public/og-image.png
+
+  build:
+    name: ⚡ Build + Deploy
+    needs: blender
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Lấy mô hình mới từ Blender
+        uses: actions/download-artifact@v5
+        continue-on-error: true
+        with:
+          name: blender-assets
+          path: public
+
+      - name: Build web
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          TELEGRAM_BOT_USERNAME: ${{ vars.TELEGRAM_BOT_USERNAME }}
+
+      - run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+
+      - name: 🚀 Deploy lên nhánh gh-pages (GitHub Pages)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          single-commit: true
