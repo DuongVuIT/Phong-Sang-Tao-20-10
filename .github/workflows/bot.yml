@@ -1,0 +1,47 @@
+name: 🤖 Bot Telegram
+
+# Bot trả lời tin nhắn mà không cần server: cứ ~5 phút chạy một lượt, mỗi lượt nghe ~3 phút.
+# Cần secret TELEGRAM_BOT_TOKEN (Settings → Secrets and variables → Actions).
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write # lưu trạng thái (đã mã hoá) lên nhánh bot-state
+
+concurrency:
+  group: telegram-bot
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Lấy trạng thái bot
+        run: git fetch -q --depth 1 origin bot-state && git show origin/bot-state:state.enc > "$RUNNER_TEMP/state.enc" || echo "Chưa có trạng thái"
+
+      - name: Trả lời tin nhắn
+        run: node scripts/bot.mjs
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          BOT_STATE: ${{ runner.temp }}/state.enc
+          BOT_POLL_SECONDS: "170"
+
+      - name: Lưu trạng thái
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          f="$RUNNER_TEMP/state.enc"
+          [ -s "$f" ] || exit 0
+          if git show origin/bot-state:state.enc 2>/dev/null | cmp -s - "$f"; then exit 0; fi
+          d=$(mktemp -d) && cp "$f" "$d/state.enc" && cd "$d"
+          git init -q -b bot-state && git add state.enc
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "bot state"
+          git push -qf "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" bot-state
