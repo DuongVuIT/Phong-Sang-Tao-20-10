@@ -98,7 +98,14 @@ async function handle(msg) {
 const deadline = Date.now() + pollSeconds * 1000;
 do {
   const timeout = Math.max(0, Math.min(50, Math.floor((deadline - Date.now()) / 1000)));
-  const updates = await api("getUpdates", { offset: state.offset, timeout, allowed_updates: ["message"] });
+  let updates;
+  try {
+    updates = await api("getUpdates", { offset: state.offset, timeout, allowed_updates: ["message"] });
+  } catch (e) {
+    // lỗi mạng tạm thời: dừng lượt này, tin nhắn chưa xử lý vẫn còn ở Telegram cho lượt sau
+    console.log("getUpdates lỗi:", e.message);
+    break;
+  }
   for (const u of updates) {
     state.offset = u.update_id + 1;
     if (u.message) await handle(u.message);
