@@ -97,7 +97,7 @@ async function handle(msg) {
 
 const deadline = Date.now() + pollSeconds * 1000;
 do {
-  const timeout = Math.max(0, Math.min(50, Math.floor((deadline - Date.now()) / 1000)));
+  const timeout = Math.max(0, Math.min(25, Math.floor((deadline - Date.now()) / 1000)));
   let updates;
   try {
     updates = await api("getUpdates", { offset: state.offset, timeout, allowed_updates: ["message"] });
